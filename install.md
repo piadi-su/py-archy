@@ -5,6 +5,12 @@ keyboard.c / keyboard.h	gestione layout tastiera
 install.c / install.h	montaggio, pacstrap, generazione fstab
 utils.c / utils.h	funzioni di supporto, ad esempio run_cmd() per eseguire comandi shell
 
+# cat /sys/firmware/efi/fw_platform_size
+res 64, 32 efi
+
+non == bios
+
+
 /////////////////////
 guida per l'installazione
 
