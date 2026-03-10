@@ -93,6 +93,11 @@ genfstab -U  /mnt >> /mnt/etc/fstab
 //chroot
 arch-chroot /mnt
 
+// da qui in poi fare i comnadi con arch-chroot /mnt <comando>
+
+
+
+
 PARTE DIFFICILE
 ///////////////////////////////
 //info zone
@@ -117,6 +122,11 @@ i can just lunch them in the file no need to uncomment them
 
 //lengage
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+
+
+
+
 ////////////////////////////////////////
 
 echo "<hostname>" >> /etc/hostname
@@ -127,6 +137,11 @@ root pw/
 useradd -m -G wheel,users <user>
 passwd <user>
 ////////////////////////////////////
+
+
+
+
+
 
 ////////////////
 //network enable
@@ -145,6 +160,9 @@ grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 
 
 /////install grub bios
+
+
+////making grub conf
 grub-mkconfig -o /boot/grub/grub.cfg
 
 //////////

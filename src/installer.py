@@ -1,6 +1,7 @@
 import time
 import subprocess
 import os
+import getpass
 
 def clear():
     subprocess.run(["clear"])
@@ -27,7 +28,7 @@ github: https://github.com/piadi-su
 def start():
     
     while True:
-        script_starter = input("start the script[y/n]: ").lower()
+        script_starter = input("start the script[y/n]=> ").lower()
 
         if script_starter == "y":
             return True
@@ -42,16 +43,87 @@ def part(disk, n):
     else:
         return f"/dev/{disk}{n}"
 
-def user_h_passwd():
-    # root passwd
-    # user
-    # user passwd
-    # hostname
-    pass
+def start_user_h_passwd():
 
-def localization_and_timezone():
+    user_name = input("Set your username: ")
+
     
-    # TIMEZONE
+
+    root_passwd = getpass.getpass("Set root password: ")
+    user_passwd = getpass.getpass(f"Set password for {user_name}: ")
+
+    hostname = input("Set hostname for your system: ")
+
+    return hostname, user_name, root_passwd, user_passwd
+
+
+def user_h_passwd_chroot(hostname, user_name, root_passwd, user_passwd):
+    
+    #adding user
+    # useradd -m -G wheel,users <user>
+    subprocess.run([
+        "arch-chroot",
+        "/mnt",
+        "useradd",
+        "-m",
+        "-G",
+        "wheel,users",
+        user_name
+        ], check=True)
+
+    # decommenta la riga %wheel in /etc/sudoers
+    subprocess.run([
+        "arch-chroot", "/mnt",
+        "sed", "-i",
+        r"s/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/",
+        "/etc/sudoers"
+    ], check=True)
+
+    # setting the hostname
+    with open("/mnt/etc/hostname", "w") as f:
+        f.write(hostname + "\n")
+
+    # setting root passwd
+    subprocess.run(
+        ["arch-chroot", "/mnt", "chpasswd"],
+        input=f"root:{root_passwd}\n", text=True, check=True
+    )
+
+    # setting root passwd
+    subprocess.run(
+        ["arch-chroot", "/mnt", "chpasswd"],
+        input=f"{user_name}:{user_passwd}\n", text=True, check=True
+    )
+    
+
+
+def localization_and_timezone_chroot(timezone, selected_locale):
+    #--time-zone--
+    # setting timezone
+    
+    # ln -sf /usr/share/zoneinfo/Europe/Rome /etc/localtime
+    # hwclock --systohc
+    subprocess.run(["arch-chroot", "/mnt", "ln", "-sf", f"/usr/share/zoneinfo/{timezone}", "/etc/localtime"], check=True)
+    subprocess.run(["arch-chroot", "/mnt", "hwclock", "--systohc"], check=True)
+    
+    
+    
+    # write in locale.gen
+    with open(f"/mnt/etc/locale.gen", "w") as f:
+        f.write(f"{selected_locale} UTF-8\n")
+    
+    # generate the locale
+    subprocess.run(["arch-chroot", "/mnt", "locale-gen"], check=True)
+    
+    # setting system local
+    with open(f"/mnt/etc/locale.conf", "w") as f:
+        f.write(f"LANG={selected_locale}\n")
+    
+    print(f"Locale set to {selected_locale} and timezone set to {timezone}")
+
+
+def start_localization_info():
+        # TIMEZONE
     # this is semplified list
     main_regions = ["Africa", "America", "Asia", "Europe", "Pacific", "Atlantic"]
     
@@ -82,7 +154,7 @@ def localization_and_timezone():
 
     # user input
     while True:
-        city_choice = input("Type the city name exactly as it appears in zoneinfo: ")
+        city_choice = input("Type the city name exactly as it appears in zoneinfo => ")
         if city_choice in all_cities:
             city = city_choice
             break
@@ -91,13 +163,10 @@ def localization_and_timezone():
 
     # Build timezone **after** valid city is selected
     timezone = f"{region}/{city}"
-    print("Selected timezone:", timezone)    
+    print("Selected timezone:", timezone)
     
+    #-----Secondo-part------
 
-    # setting timezone
-    subprocess.run(["ln", "-sf", f"/usr/share/zoneinfo/{timezone}", "/etc/localtime"], check=True)
-    subprocess.run(["hwclock", "--systohc"], check=True)
-    
     # --- LOCALE ---
     available_locales = [
         "en_US.UTF-8",
@@ -126,19 +195,76 @@ def localization_and_timezone():
                 print("Number out of range, try again.")
         except ValueError:
             print("Invalid input, enter a number.")
+
+    return timezone, selected_locale
+
     
-    # write in locale.gen
-    with open("/etc/locale.gen", "w") as f:
-        f.write(f"{selected_locale} UTF-8\n")
+def install_utilities(EFI_BOOT):
+
+    #enable networkmanager for an internet connection at start
+    subprocess.run([
+        "arch-chroot",
+        "/mnt/",
+        "systemctl",
+        "enable"
+        "NetworkManager"
+        ], check=True)
     
-    # generate the locale
-    subprocess.run(["locale-gen"], check=True)
+    #installing boot loader and other pkgs
+    subprocess.run([
+        "arch-chroot",
+        "/mnt/",
+        "pacman",
+        "-S",
+        "grub",
+        "man-db",
+        "man-pages"
+        ], check=True)
     
-    # setting system local
-    with open("/etc/locale.conf", "w") as f:
-        f.write(f"LANG={selected_locale}\n")
+    if EFI_BOOT:
+        subprocess.run([
+            "arch-chroot",
+            "/mnt/",
+            "pacman",
+            "-S",
+            "efibootmgr"
+            ], check=True)
+
+
+
+def grub_install_chroot(EFI_BOOT,BIOS_boot_drive):
     
-    print(f"Locale set to {selected_locale} and timezone set to {timezone}")
+    #GRUB INSTALLATION
+
+    # grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+    if EFI_BOOT:
+        subprocess.run([
+            "arch-chroot",
+            "/mnt/",
+            "grub-install",
+            "--target=x86_64-efi",
+            "--efi-directory=/boot",
+            "--bootloader-id=GRUB"
+            ], check=True)
+    
+    # grub-install --target=i386-pc /dev/<disk>
+    else:
+        subprocess.run([
+            "arch-chroot",
+            "/mnt/",
+            "grub-install",
+            "--target=i386-pc",
+            BIOS_boot_drive
+            ], check=True)
+
+    # making grub config
+    # grub-mkconfig -o /boot/grub/grub.cfg
+    subprocess.run([
+        "grub-mkconfig",
+        "-o",
+        "/boot/grub/grub.cfg"
+        ],check=True)
+
 
 
 
@@ -153,6 +279,8 @@ def main():
         return
 
     clear()
+    hostname, user_name, root_passwd, user_passwd = start_user_h_passwd() 
+    timezone, locale = start_localization_info()
 
     #ask for the disk to partition
 
@@ -169,14 +297,7 @@ def main():
     ROOT = part(DISK, 2)
 
 
-    is_efi = int(subprocess.run(
-        ["cat", "/sys/firmware/efi/fw_platform_size"],
-        capture_output=True,
-        text=True
-        ).stdout.strip())
-
-    if is_efi in (32, 64):
-        EFI_BOOT = True
+    EFI_BOOT = os.path.exists("/sys/firmware/efi")
 
     #DISK PARTITIONING
     
@@ -308,15 +429,72 @@ def main():
 
     # REFLECTOR
     #use reflector for pacman pkgs
-
+    # reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
     subprocess.run([
         "reflector",
-        ""
-        ],check=True)
+        "--latest", "10",
+        "--sort", "rate",
+        "--save", "/etc/pacman.d/mirrorlist"
+        ], check=True)
+    
+    #PACSTRAP
+    # pacstrap -K /mnt base linux linux-firmware base-devel networkmanager vim
+    # intalling kernle and other important things
+    subprocess.run([
+        "pacstrap",
+        "-K",
+        "/mnt",
+        "base",
+        "linux",
+        "linux-firmware",
+        "base-devel",
+        "networkmanager",
+        "vim"
+        ], check=True)
+    
+    #FSTAB
+    # genfstab -U  /mnt >> /mnt/etc/fstab
+    subprocess.run([
+        "genfstab",
+        "-U",
+        "/mnt",
+        ">>"
+        "/mnt/etc/fstab"
+        ], check=True)
 
+    clear()
 
+    print("changeing ROOT")
+    timer()
 
+    #chroot gen localization
+    localization_and_timezone_chroot(timezone, locale)
+    
+    #setting up ROOT passwd user passwd user and hostname
+    user_h_passwd_chroot(hostname, user_name, root_passwd, user_passwd)
+    
+    #installer of grub and other software
+    install_utilities(EFI_BOOT)
 
+    #grub installation
+    grub_install_chroot(EFI_BOOT,BOOT)
+    
+    clear()
+
+    print("THE INSTALLATION is finish")
+    reboot = input("do you want to reboot now[y/n]=> ").lower
+
+    if reboot == "y":
+        #unmounting everithing 
+        subprocess.run([
+            "umount",
+            "-R",
+            "/mnt"
+            ], check= True)
+
+        subprocess.run([
+            "reboot"
+            ], check=True)
 
 
 
@@ -325,21 +503,3 @@ if __name__ == "__main__":
 
 
 
-# # Pulire la tabella delle partizioni esistente
-# sgdisk --zap-all /dev/<disk>
-#
-# # Creare partizione EFI 512 MB
-# sgdisk --new=1:0:+2G --typecode=1:ef00 --change-name=1:"EFI System" /dev/<disk>
-#patizione bios
-#sgdisk --new=3:0:+2M --typecode=3:ef02 --change-name=3:"BIOS Boot" /dev/<disk>
-
-# # Creare partizione root con il resto del disco
-# sgdisk --new=2:0:0 --typecode=2:8300 --change-name=2:"Linux Root" /dev/<disk>
-#
-# # Creare partizione swap di 4 GB alla fine
-# sgdisk --new=3:0:+4G --typecode=3:8200 --change-name=3:"Linux Swap" /dev/<disk>
-#
-# # Scrivere le modifiche
-
-
-#make at the start a promt for localization timezone user passwd.user passwd.root
