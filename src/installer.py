@@ -483,18 +483,26 @@ def main():
 
     print("THE INSTALLATION is finish")
     reboot = input("do you want to reboot now[y/n]=> ").lower
+    
+    while True:
+        if reboot == "y":
+            #unmounting everithing 
+            subprocess.run([
+                "umount",
+                "-R",
+                "/mnt"
+                ], check= True)
 
-    if reboot == "y":
-        #unmounting everithing 
-        subprocess.run([
-            "umount",
-            "-R",
-            "/mnt"
-            ], check= True)
+            subprocess.run([
+                "reboot"
+                ], check=True)
 
-        subprocess.run([
-            "reboot"
-            ], check=True)
+        if reboot == "n":
+            break
+
+    return
+        
+        
 
 
 
