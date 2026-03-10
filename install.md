@@ -110,6 +110,11 @@ locale-gen
 en_US.UTF-8
 en_US.ISO-8859-1
 
+i can just lunch them in the file no need to uncomment them
+
+/////
+
+
 //lengage
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 ////////////////////////////////////////
@@ -121,7 +126,7 @@ root pw/
 
 useradd -m -G wheel,users <user>
 passwd <user>
-
+////////////////////////////////////
 
 ////////////////
 //network enable
