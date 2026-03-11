@@ -206,7 +206,7 @@ def install_utilities(EFI_BOOT):
         "arch-chroot",
         "/mnt/",
         "systemctl",
-        "enable"
+        "enable",
         "NetworkManager"
         ], check=True)
     
@@ -454,7 +454,8 @@ def main():
         subprocess.run(["genfstab", "-U", "/mnt"], stdout=f, check=True)
 
     clear()
-
+    
+    #///
     print("changeing ROOT")
     
 
