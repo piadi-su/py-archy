@@ -7,21 +7,21 @@ def clear():
     subprocess.run(["clear"])
     menu()
 
-def timer():
-    for i in range(1, 4):
-        time.sleep(1)
-        print("." * i)
 
 
 def menu():
 
     print("""
-======================================
-=|  PIADI: ARCH-INSTALLATION SCRIPT |=
-======================================
-github: https://github.com/piadi-su
-
-
+██████╗ ██╗   ██╗      █████╗ ██████╗  ██████╗██╗  ██╗██╗   ██╗
+██╔══██╗╚██╗ ██╔╝     ██╔══██╗██╔══██╗██╔════╝██║  ██║╚██╗ ██╔╝
+██████╔╝ ╚████╔╝█████╗███████║██████╔╝██║     ███████║ ╚████╔╝ 
+██╔═══╝   ╚██╔╝ ╚════╝██╔══██║██╔══██╗██║     ██╔══██║  ╚██╔╝  
+██║        ██║        ██║  ██║██║  ██║╚██████╗██║  ██║   ██║   
+╚═╝        ╚═╝        ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   
+                                                               
+=================================================================
+                github: https://github.com/piadi-su                       
+=================================================================
 """)
 
 
@@ -302,7 +302,7 @@ def main():
     #DISK PARTITIONING
     
     print("startig the disk partiton")
-    timer()
+    
 
     # deleting old partition
     # sgdisk --zap-all /dev/<disk>
@@ -313,7 +313,7 @@ def main():
         "--zap-all",
         f"/dev/{DISK}"
         ], check=True)
-    timer()
+    
     print("done\n")
     
 
@@ -342,7 +342,7 @@ def main():
             f"/dev/{DISK}"
             ], check=True)
 
-    timer()
+    
     print("done\n")
     
 
@@ -357,13 +357,9 @@ def main():
         f"/dev/{DISK}"
         ], check=True)
 
-    timer()
+    
     print("done\n")
     
-    #update the kernel to detect the new patiotion
-
-
-    subprocess.run(["partprobe"], check=True)
         
 
     
@@ -390,7 +386,7 @@ def main():
         ROOT
         ], check=True)
 
-    timer()
+    
     print("done\n")
 
     clear()
@@ -422,7 +418,7 @@ def main():
             ], check=True)
 
 
-    timer()
+    
     print("done\n")
 
     clear()
@@ -460,7 +456,7 @@ def main():
     clear()
 
     print("changeing ROOT")
-    timer()
+    
 
     #chroot gen localization
     localization_and_timezone_chroot(timezone, locale)
