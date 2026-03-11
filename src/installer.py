@@ -240,7 +240,7 @@ def grub_install_chroot(EFI_BOOT,BIOS_boot_drive):
     if EFI_BOOT:
         subprocess.run([
             "arch-chroot",
-            "/mnt/",
+            "/mnt",
             "grub-install",
             "--target=x86_64-efi",
             "--efi-directory=/boot",
@@ -251,7 +251,7 @@ def grub_install_chroot(EFI_BOOT,BIOS_boot_drive):
     else:
         subprocess.run([
             "arch-chroot",
-            "/mnt/",
+            "/mnt",
             "grub-install",
             "--target=i386-pc",
             BIOS_boot_drive
@@ -260,6 +260,8 @@ def grub_install_chroot(EFI_BOOT,BIOS_boot_drive):
     # making grub config
     # grub-mkconfig -o /boot/grub/grub.cfg
     subprocess.run([
+        "arch-chroot",
+        "/mnt",
         "grub-mkconfig",
         "-o",
         "/boot/grub/grub.cfg"
