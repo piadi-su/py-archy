@@ -330,7 +330,7 @@ def main():
             "--new=1:0:+2G",
             "--typecode=1:ef00",
             "--change-name=1:EFI System",
-            BOOT
+            f"/dev/{DISK}"
             ], check=True)
 
     else: #if yout on BIOS
@@ -339,7 +339,7 @@ def main():
             "--new=1:0:+2M",
             "--typecode=1:ef02",
             "--change-name=1:BIOS boot",
-            BOOT
+            f"/dev/{DISK}"
             ], check=True)
 
     timer()
@@ -354,7 +354,7 @@ def main():
         "--new=2:0:0",
         "--typecode=2:8300",
         "--change-name=2:Linux ROOT",
-        ROOT
+        f"/dev/{DISK}"
         ], check=True)
 
     timer()
@@ -454,13 +454,8 @@ def main():
     
     #FSTAB
     # genfstab -U  /mnt >> /mnt/etc/fstab
-    subprocess.run([
-        "genfstab",
-        "-U",
-        "/mnt",
-        ">>"
-        "/mnt/etc/fstab"
-        ], check=True)
+    with open("/mnt/etc/fstab", "w") as f:
+        subprocess.run(["genfstab", "-U", "/mnt"], stdout=f, check=True)
 
     clear()
 
