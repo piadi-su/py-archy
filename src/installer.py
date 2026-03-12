@@ -1,4 +1,3 @@
-import time
 import subprocess
 import os
 import getpass
@@ -44,15 +43,39 @@ def part(disk, n):
         return f"/dev/{disk}{n}"
 
 def start_user_h_passwd():
+    user_name =""
+    root_passwd =""
+    user_passwd =""
+    hostname =""
 
-    user_name = input("Set your username: ")
+    while True:
+        user_name = input("Set your username: ")
+        next = input("are you sure[y/n]=> ").lower()
 
-    
+        if next == "y":
+            break
 
-    root_passwd = getpass.getpass("Set root password: ")
-    user_passwd = getpass.getpass(f"Set password for {user_name}: ")
+    while True:
+        root_passwd = getpass.getpass("Set root password: ")
+        next = input("are you sure[y/n]=> ").lower()
 
-    hostname = input("Set hostname for your system: ")
+        if next == "y":
+            break
+
+    while True:
+        user_passwd = getpass.getpass(f"Set password for {user_name}: ")
+        next = input("are you sure[y/n]=> ").lower()
+
+        if next == "y":
+            break
+
+    while True:
+        hostname = input("Set hostname for your system: ")
+        next = input("are you sure[y/n]=> ").lower()
+
+        if next == "y":
+            break
+        
 
     return hostname, user_name, root_passwd, user_passwd
 
@@ -71,7 +94,7 @@ def user_h_passwd_chroot(hostname, user_name, root_passwd, user_passwd):
         user_name
         ], check=True)
 
-    # decommenta la riga %wheel in /etc/sudoers
+    # uncomment the line: %wheel in /etc/sudoers
     subprocess.run([
         "arch-chroot", "/mnt",
         "sed", "-i",
@@ -115,7 +138,7 @@ def localization_and_timezone_chroot(timezone, selected_locale):
     # generate the locale
     subprocess.run(["arch-chroot", "/mnt", "locale-gen"], check=True)
     
-    # setting system local
+    # setting system locale
     with open(f"/mnt/etc/locale.conf", "w") as f:
         f.write(f"LANG={selected_locale}\n")
     
@@ -126,12 +149,12 @@ def start_localization_info():
         # TIMEZONE
     # this is semplified list
     main_regions = ["Africa", "America", "Asia", "Europe", "Pacific", "Atlantic"]
-    
+    print()
     print("Available regions:")
     for i, r in enumerate(main_regions, start=1):
         print(f"{i}. {r}")
     
-    # region chosing 
+    # region chosing
     while True:
         try:
             choice = int(input("Select a region (number)=> "))
@@ -165,7 +188,7 @@ def start_localization_info():
     timezone = f"{region}/{city}"
     print("Selected timezone:", timezone)
     
-    #-----Secondo-part------
+    #-----Second-part------
 
     # --- LOCALE ---
     available_locales = [
@@ -232,7 +255,7 @@ def install_utilities(EFI_BOOT):
 
 
 
-def grub_install_chroot(EFI_BOOT,BIOS_boot_drive):
+def grub_install_chroot(EFI_BOOT,DISK):
     
     #GRUB INSTALLATION
 
@@ -254,7 +277,7 @@ def grub_install_chroot(EFI_BOOT,BIOS_boot_drive):
             "/mnt",
             "grub-install",
             "--target=i386-pc",
-            BIOS_boot_drive
+            DISK
             ], check=True)
 
     # making grub config
@@ -282,6 +305,8 @@ def main():
 
     clear()
     hostname, user_name, root_passwd, user_passwd = start_user_h_passwd() 
+
+    clear()
     timezone, locale = start_localization_info()
 
     #ask for the disk to partition
@@ -290,7 +315,7 @@ def main():
     subprocess.run(["lsblk"])
     while True:
         DISK = input("\nselect the this we are going to be using => ")
-        confirm_disk = input(f"is this the right disk: {DISK} [y/n] => ").lower()
+        confirm_disk = input(f"is this the right disk: |{DISK}| [y/n] => ").lower()
     
         if confirm_disk == "y":
             break
@@ -303,7 +328,7 @@ def main():
 
     #DISK PARTITIONING
     
-    print("startig the disk partiton")
+    print("Starting disk partitioning")
     
 
     # deleting old partition
@@ -325,7 +350,7 @@ def main():
     # BIOS
     #sgdisk --new=3:0:+2M --typecode=3:ef02 --change-name=3:"BIOS Boot" /dev/<disk>
 
-    print("making BOOT partiton")
+    print("creating BOOT partiton")
     if EFI_BOOT:
         subprocess.run([
             "sgdisk",
@@ -371,7 +396,7 @@ def main():
     
     #making the efi file system | if you are on bios u don't need to make it
     # mkfs.fat -F 32 /dev/<disk>1 
-    print("making file system")
+    print("MAKING FILE SYSTEM")
     if EFI_BOOT:
         subprocess.run([
             "mkfs.fat",
@@ -457,8 +482,7 @@ def main():
 
     clear()
     
-    #///
-    print("changeing ROOT")
+    print("CHANGING ROOT")
     
 
     #chroot gen localization
@@ -471,30 +495,26 @@ def main():
     install_utilities(EFI_BOOT)
 
     #grub installation
-    grub_install_chroot(EFI_BOOT,BOOT)
+    grub_install_chroot(EFI_BOOT,DISK)
     
     clear()
 
-    print("THE INSTALLATION is finish")
-    reboot = input("do you want to reboot now[y/n]=> ").lower
+    print("Installation completed successfully.")
+    reboot = input("do you want to reboot now[y/~]=> ").lower()
     
-    while True:
-        if reboot == "y":
-            #unmounting everithing 
-            subprocess.run([
-                "umount",
-                "-R",
-                "/mnt"
-                ], check= True)
+    if reboot == "y":
+        # unmounting everything 
+        subprocess.run([
+            "umount",
+            "-R",
+            "/mnt"
+            ], check= True)
 
-            subprocess.run([
-                "reboot"
-                ], check=True)
-
-        if reboot == "n":
-            break
-
-    return
+        subprocess.run([
+            "reboot"
+            ], check=True)
+    else:
+        return
         
         
 
