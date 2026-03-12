@@ -277,7 +277,7 @@ def grub_install_chroot(EFI_BOOT,DISK):
             "/mnt",
             "grub-install",
             "--target=i386-pc",
-            DISK
+            f"/dev/{DISK}"
             ], check=True)
 
     # making grub config
@@ -315,7 +315,7 @@ def main():
     subprocess.run(["lsblk"])
     while True:
         DISK = input("\nselect the this we are going to be using => ")
-        confirm_disk = input(f"is this the right disk: |{DISK}| [y/n] => ").lower()
+        confirm_disk = input(f"is this the right disk: | {DISK} | [y/n] => ").lower()
     
         if confirm_disk == "y":
             break
